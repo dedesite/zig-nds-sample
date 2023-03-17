@@ -2,6 +2,9 @@ const c = @cImport({
     // See https://github.com/ziglang/zig/issues/515
     @cDefine("_NO_CRT_STDIO_INLINE", "1");
     @cInclude("nds/libversion.h");
+    // qpacked_struct define in ndstypes.h is not well handle by zig
+    // so we redefined it
+    @cDefine("packed_struct", {});
     @cInclude("nds/ndstypes.h");
     @cInclude("nds/system.h");
     @cInclude("nds/interrupts.h");

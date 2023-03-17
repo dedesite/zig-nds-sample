@@ -154,7 +154,6 @@ endif
 # Temp : zig cImport can't handle PACKED define so we comment it
 #---------------------------------------------------------------------------------
 %.o: %.zig
-	sed -i 's/\#define\ packed_struct\ struct\ PACKED/\/\/\#define\ packed_struct\ struct\ PACKED/' $(LIBNDS)/include/nds/ndstypes.h
 	zig build-obj \
 		-fomit-frame-pointer \
 		-target arm-freestanding-eabi \
@@ -165,4 +164,3 @@ endif
 		-I$(DEVKITARM)/arm-none-eabi/include \
 		-femit-bin=$(CURDIR)/$@ \
 		$<
-	sed -i 's/\/\/\#define\ packed_struct\ struct\ PACKED/\#define\ packed_struct\ struct\ PACKED/' $(LIBNDS)/include/nds/ndstypes.h
