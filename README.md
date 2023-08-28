@@ -4,12 +4,14 @@ Zig nds example
 This is a working nds example written in ZIG.
 For now, it's a clone of the [hello_world](https://github.com/devkitPro/nds-examples/tree/master/hello_world) example, but it may evolve to something else in the futur.
 
-I just had to add a Makefile target for .zig files with the right compiler options (thanks sys64738 for its help).
+Previous version used a modified Makefile, now I try to use Zig build system instead, but it's still very hacky for now.
 
 ## Prerequisites
 
 You need to [install devitkit pro](https://devkitpro.org/wiki/devkitPro_pacman) before being able to use this project.
+I also use [desmune](https://github.com/TASEmulators/desmume) to automatically run the rom, so you need it in order to use `zig build run`.
 
+Also, the build script will only run on Linux for now.
 ## Current limitations
 
 - The `@cImport` zig function doesn't parse well anonymous struct and some maccros used by libnds, so I had to manually choose the needed headers instead of directly important `nds.h`. For example, [`sprite.h`](https://github.com/devkitPro/libnds/blob/master/include/nds/arm9/sprite.h) can't be imported via `@cImport`.
