@@ -3,7 +3,11 @@ const std = @import("std");
 // Although this function looks imperative, note that its job is to
 // declaratively construct a build graph that will be executed by an external
 // runner.
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) !void {
+    const devkitProDir = try std.process.getEnvVarOwned(b.allocator, "DEVKITPRO");
+    defer b.allocator.free(devkitProDir);
+    const devkitArmDir = try std.process.getEnvVarOwned(b.allocator, "DEVKITARM");
+    defer b.allocator.free(devkitArmDir);
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
     // means any target is allowed, and the default is native. Other options
@@ -22,23 +26,16 @@ pub fn build(b: *std.Build) void {
         .name = "hello-world",
         // In this case the main source file is merely a path, however, in more
         // complicated build scripts, this could be a generated file.
-        .root_source_file = .{ .path = "source/hello_world.zig" },
+        .root_source_file = .{ .path = "src/hello_world.zig" },
         .target = cross_target,
         .optimize = optimize,
-        //.flags = &.{"-fomit-frame-pointer"},
     });
 
     obj.omit_frame_pointer = true;
-    // obj.generated_bin = std.Build.GeneratedFile{ .step = &obj.step, .path = "./build/hello_world.o" };
-    obj.addIncludePath(.{ .path = "/opt/devkitpro/libnds/include/"});
-    obj.addIncludePath(.{ .path = "/opt/devkitpro/devkitARM/arm-none-eabi/include"});
+    obj.addIncludePath(.{ .path = b.pathJoin(&.{ devkitProDir, "/libnds/include/" }) });
+    obj.addIncludePath(.{ .path = b.pathJoin(&.{ devkitArmDir, "/arm-none-eabi/include" }) });
 
     const out = b.addInstallFile(obj.getEmittedBin(), "hello_world.o");
-    //out.step.dependOn(&obj.step);
-    // obj.addCompileFlags([][]const u8 {
-    //     "-DARM9",
-    //     "-Dcpu=arm946e_s"
-    // });
 
     const link = b.addSystemCommand(&[_][]const u8{
         "arm-none-eabi-gcc",
@@ -47,10 +44,10 @@ pub fn build(b: *std.Build) void {
         "-mthumb",
         "-Wl,-Map,zig-nds-sample.map",
         "zig-out/hello_world.o",
-        "-L/opt/devkitpro/libnds/lib",
+        b.fmt("-L{s}", .{b.pathJoin(&.{ devkitProDir, "/libnds/lib" })}),
         "-lnds9",
         "-o",
-        "./zig-nds-sample.elf"
+        "./zig-nds-sample.elf",
     });
 
     link.step.dependOn(&out.step);
@@ -62,28 +59,17 @@ pub fn build(b: *std.Build) void {
         "-9",
         "./zig-nds-sample.elf",
         "-b",
-        "/opt/devkitpro/libnds/icon.bmp",
+        b.pathJoin(&.{ devkitProDir, "/libnds/icon.bmp" }),
         "zig-nds-sample;built with devkitARM;http://devkitpro.org",
     });
     rom.step.dependOn(&link.step);
 
     b.default_step.dependOn(&rom.step);
-    // const install_object = b.addInstallFile(obj.getOutputSource(), "hello-world.o");
-    // b.getInstallStep().dependOn(&install_object.step);
-    //obj.override_dest_dir = std.Build.InstallDir{ .custom = "obj" };
-
-    // This declares intent for the executable to be installed into the
-    // standard location when the user invokes the "install" step (the default
-    // step when running `zig build`).
-    //b.installArtifact(obj);
 
     // This *creates* a Run step in the build graph, to be executed when another
     // step is evaluated that depends on it. The next line below will establish
     // such a dependency.
-    const run_cmd = b.addSystemCommand(&[_][]const u8{
-        "desmume",
-        "zig-nds-sample.nds"
-    });
+    const run_cmd = b.addSystemCommand(&[_][]const u8{ "desmume", "zig-nds-sample.nds" });
 
     // // By making the run step depend on the install step, it will be run from the
     // // installation directory rather than directly from within the cache directory.
