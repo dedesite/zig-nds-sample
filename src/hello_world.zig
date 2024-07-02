@@ -29,19 +29,19 @@ export fn main() i32 {
 
     _ = c.consoleDemoInit();
 
-    _ = c.iprintf("     Hello DS dev'rs using ZIG\n");
-    _ = c.iprintf("     \x1b[32mwww.devkitpro.org\n");
-    _ = c.iprintf("     \x1b[32;1mhttps://ziglang.org\x1b[39m");
+    _ = c.printf("     Hello DS dev'rs using ZIG\n");
+    _ = c.printf("     \x1b[32mwww.devkitpro.org\n");
+    _ = c.printf("     \x1b[32;1mhttps://ziglang.org\x1b[39m");
 
     while (true) {
         c.swiWaitForVBlank();
         c.scanKeys();
-        var keys: u32 = c.keysDown();
+        const keys: u32 = c.keysDown();
         if ((keys & c.KEY_START) > 0) break;
         c.touchRead(&touchXY);
-        _ = c.iprintf("\x1b[10;0HFrame = %d", frame);
-        _ = c.iprintf("\x1b[16;0HTouch x = %04X, %04X\n", touchXY.rawx, touchXY.px);
-        _ = c.iprintf("Touch y = %04X, %04X\n", touchXY.rawy, touchXY.py);
+        _ = c.printf("\x1b[10;0HFrame = %d", frame);
+        _ = c.printf("\x1b[16;0HTouch x = %04X, %04X\n", touchXY.rawx, touchXY.px);
+        _ = c.printf("Touch y = %04X, %04X\n", touchXY.rawy, touchXY.py);
     }
 
     return 0;

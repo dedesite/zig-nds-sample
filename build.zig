@@ -4,18 +4,18 @@ const std = @import("std");
 // declaratively construct a build graph that will be executed by an external
 // runner.
 pub fn build(b: *std.Build) !void {
-    const devkitProDir = try std.process.getEnvVarOwned(b.allocator, "DEVKITPRO");
-    defer b.allocator.free(devkitProDir);
-    const devkitArmDir = try std.process.getEnvVarOwned(b.allocator, "DEVKITARM");
-    defer b.allocator.free(devkitArmDir);
+    const blocksDsDir = try std.process.getEnvVarOwned(b.allocator, "BLOCKSDS");
+    defer b.allocator.free(blocksDsDir);
+    // const devkitArmDir = try std.process.getEnvVarOwned(b.allocator, "DEVKITARM");
+    // defer b.allocator.free(devkitArmDir);
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
     // means any target is allowed, and the default is native. Other options
     // for restricting supported target set are available.
-    const cross_target = std.zig.CrossTarget.parse(.{
+    const cross_target = b.resolveTargetQuery(std.Target.Query.parse(.{
         .arch_os_abi = "arm-freestanding-eabi",
         .cpu_features = "arm9",
-    }) catch unreachable;
+    }) catch unreachable);
 
     // Standard optimization options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
@@ -26,41 +26,48 @@ pub fn build(b: *std.Build) !void {
         .name = "hello-world",
         // In this case the main source file is merely a path, however, in more
         // complicated build scripts, this could be a generated file.
-        .root_source_file = .{ .path = "src/hello_world.zig" },
+        .root_source_file = b.path("src/hello_world.zig"),
         .target = cross_target,
         .optimize = optimize,
     });
 
-    obj.omit_frame_pointer = true;
-    obj.addIncludePath(.{ .path = b.pathJoin(&.{ devkitProDir, "/libnds/include/" }) });
-    obj.addIncludePath(.{ .path = b.pathJoin(&.{ devkitArmDir, "/arm-none-eabi/include" }) });
+    // Don't know how to set the omit-frame-pointer option now
+    // obj.omit_frame_pointer = true;
+    obj.addIncludePath(b.path(b.pathJoin(&.{ "..", blocksDsDir, "/libs/libnds/include/" })));
+    obj.addIncludePath(b.path("../opt/wonderful/toolchain/gcc-arm-none-eabi/include"));
+    obj.addIncludePath(b.path("../opt/wonderful/toolchain/gcc-arm-none-eabi/arm-none-eabi/include"));
 
     const out = b.addInstallFile(obj.getEmittedBin(), "hello_world.o");
 
     const link = b.addSystemCommand(&[_][]const u8{
-        "arm-none-eabi-gcc",
-        "-specs=ds_arm9.specs",
-        "-g",
-        "-mthumb",
-        "-Wl,-Map,zig-nds-sample.map",
-        "zig-out/hello_world.o",
-        b.fmt("-L{s}", .{b.pathJoin(&.{ devkitProDir, "/libnds/lib" })}),
-        "-lnds9",
+        "/opt/wonderful/toolchain/gcc-arm-none-eabi/bin/arm-none-eabi-gcc",
         "-o",
-        "./zig-nds-sample.elf",
+        "./hello_world.elf",
+        "zig-out/hello_world.o",
+        "-mthumb",
+        "-mcpu=arm946e-s+nofp",
+        b.fmt("-L{s}", .{b.pathJoin(&.{ blocksDsDir, "/libs/libnds/lib" })}),
+        "-Wl,-Map,zig-nds-sample.map",
+        "-Wl,--start-group",
+        "-lnds9",
+        "-lc",
+        "-Wl,--end-group",
+        b.fmt("-specs={s}", .{b.pathJoin(&.{ blocksDsDir, "/sys/crts/ds_arm9.specs" })}),
     });
 
     link.step.dependOn(&out.step);
 
     const rom = b.addSystemCommand(&[_][]const u8{
-        "ndstool",
+        b.pathJoin(&.{ blocksDsDir, "/tools/ndstool/ndstool" }),
         "-c",
-        "./zig-nds-sample.nds",
+        "./hello_world.nds",
+        "-7",
+        b.pathJoin(&.{ blocksDsDir, "/sys/default_arm7/arm7.elf" }),
         "-9",
-        "./zig-nds-sample.elf",
+        "./hello_world.elf",
         "-b",
-        b.pathJoin(&.{ devkitProDir, "/libnds/icon.bmp" }),
-        "zig-nds-sample;built with devkitARM;http://devkitpro.org",
+        b.pathJoin(&.{ blocksDsDir, "/sys/icon.bmp" }),
+        "hello_world;built with BlocksDS;github.com/blocksds/sdk",
     });
     rom.step.dependOn(&link.step);
 

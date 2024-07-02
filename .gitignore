@@ -3,4 +3,4 @@ build
 *.nds
 *.map
 zig-out
-zig-cache
+.zig-cache
