@@ -8,7 +8,7 @@ Previous version used a modified Makefile, now I try to use Zig build system ins
 
 ## Prerequisites
 
-You need to [install devitkit pro](https://devkitpro.org/wiki/devkitPro_pacman) before being able to use this project.
+You need to [install blocksds](https://blocksds.github.io/docs/setup/options/linux/) before being able to use this project.
 I also use [desmune](https://github.com/TASEmulators/desmume) to automatically run the rom, so you need it in order to use `zig build run`.
 
 Also, the build script will only run on Linux for now.
