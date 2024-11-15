@@ -33,9 +33,9 @@ pub fn build(b: *std.Build) !void {
 
     // Don't know how to set the omit-frame-pointer option now
     // obj.omit_frame_pointer = true;
-    obj.addIncludePath(b.path(b.pathJoin(&.{ "..", blocksDsDir, "/libs/libnds/include/" })));
-    obj.addIncludePath(b.path("../opt/wonderful/toolchain/gcc-arm-none-eabi/include"));
-    obj.addIncludePath(b.path("../opt/wonderful/toolchain/gcc-arm-none-eabi/arm-none-eabi/include"));
+    obj.addIncludePath(.{ .cwd_relative = b.pathJoin(&.{ blocksDsDir, "/libs/libnds/include/" }) });
+    obj.addIncludePath(.{ .cwd_relative = "/opt/wonderful/toolchain/gcc-arm-none-eabi/include" });
+    obj.addIncludePath(.{ .cwd_relative = "/opt/wonderful/toolchain/gcc-arm-none-eabi/arm-none-eabi/include" });
 
     const out = b.addInstallFile(obj.getEmittedBin(), "hello_world.o");
 
